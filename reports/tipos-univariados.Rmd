@@ -1,9 +1,10 @@
 ---
-title: "Tipos de filme de FULANO(A)"
-output:
-    html_document:
-    df_print: paged
+title: "Tipos de filme de Sandra Bullock"
 theme: sandstone
+output:
+  html_document: null
+  df_print: paged
+  pdf_document: default
 ---
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -28,8 +29,10 @@ paleta = c("#404E4D",
            "#F4743B")
 ```
 
+## Agrupamento com filmes de Sandra Bullock
+Usaremos dados do Rotten Tomatoes sobre os filmes de Sandra Bullock. O que queremos visualizar é a relação entre a bilheteria dos filmes e a avaliação do público.
+
 ```{r}
-## ANTES DE USAR
 # Para criar data/movies.csv
 import_data("sandra_bullock") 
 data =  read.csv("../data/movies.csv")
@@ -40,43 +43,9 @@ data =  read.csv("../data/movies.csv")
 filmes = read_imported_data()
 ```
 
-## Descrição
-
-```{r}
-filmes %>% 
-    ggplot(aes(x = ano, y = bilheteria)) + 
-    geom_point(size = 4, color = paleta[1]) 
-```
-
-
-
-```{r}
-filmes %>% 
-    ggplot(aes(x = bilheteria)) + 
-    geom_histogram(binwidth = 15, fill = paleta[2], color = "black") + 
-    geom_rug(size = .5) 
-```
-
-```{r}
-filmes %>% 
-    ggplot(aes(x = avaliacao)) + 
-    geom_histogram(binwidth = 10, boundary = 0, fill = paleta[3], color = "black") + 
-    geom_rug(size = .5) 
-```
-
-## Estrutura de grupos?
-
-```{r}
-p = filmes %>% 
-    ggplot(aes(x = "", y = bilheteria, label = filme)) + 
-    geom_jitter(width = .05, alpha = .3, size = 3) + 
-    labs(x = "")
-
-ggplotly(p)
-```
-
 ## Agrupamento hierárquico
-
+Aqui montamos um cluster hierárquico utilizando o método de ward, como resultado temos um dendrograma com os 17 filmes agrupados.
+De acordo com esse dendograma, um bom número de agrupamento seria 4, como podemos observar;
 ```{r}
 
 agrupamento_h <- filmes %>% 
@@ -88,13 +57,12 @@ agrupamento_h <- filmes %>%
     dist(method = "euclidian") %>% 
     hclust(method = "ward.D")
 
-
-
-
 ggdendrogram(agrupamento_h, rotate = T, size = 2, theme_dendro = F) + 
     labs(y = "Dissimilaridade", x = "", title = "Dendrograma")
 ```
 
+Para melhor observar os agrupamentos e nos ajudar a guiar a melhor escolha mostramos os agrupamentos de 1 a 6 
+Aqui confirmamos que o grupo 4 é a melhor opção pois, a organização da nuvem de pontos é mais “isolada”e podemos separar visualmente os grupos onde não existe uma miscigenação entre os pontos (observem as cores).
 ```{r}
 get_grupos <- function(agrupamento, num_grupos){
     agrupamento %>% 
@@ -105,7 +73,7 @@ get_grupos <- function(agrupamento, num_grupos){
         mutate(grupo = as.character(grupo))
 }
 
-atribuicoes = get_grupos(agrupamento_ex, num_grupos = 1:6)
+atribuicoes = get_grupos(agrupamento_h, num_grupos = 1:6)
 
 atribuicoes = atribuicoes %>% 
     left_join(filmes, by = c("label" = "filme"))
@@ -118,8 +86,46 @@ atribuicoes %>%
 
 ```
 
+##Grupos 
+Os 4 grupos que temos são: Péssima bilheteria e Boa avaliação, Boa bilheteria e Boa avaliação, Boa bilheteria e Péssima avaliação e Péssima bilheteria e Péssima avaliação. 
+
+
+##A descrição dos grupos é a seguinte : 
+
+#Grupo 01 - Péssima bilheteria e Boa avaliação 
+A bilheteria nesse grupo varia entre:  1.1 e 4.9 
+A avaliação nesse grupo varia entre:  34 e 73
+
+Como representantes temos : 
+  Infamous  - 1.1 bilheteria e 73 avaliação
+  Our Brand is Crisis - 4.9 bilheteria e 34 avaliação
+
+#Grupo 02 - Boa bilheteria e Boa avaliação  
+A bilheteria nesse grupo varia entre : 278.0 - 55.4 
+A avaliação nesse grupo varia entre: 96 - 56 
+
+Como representantes temos : 
+  Gravity - 274.1 bilheteria e 96 avaliação        
+  Minions - 278.0 bilheteria e 56 avaliação 
+
+#Grupo 03 - Boa Bilheteria e Péssima Avaliação 
+A bilheteria nesse grupo varia entre : 164.0 - 31.9 
+A avaliação nesse grupo varia entre: 46 - 24 
+
+Como representantes temos : 
+  The Proposal - 164.0 bilheteria e 44 avaliação 
+  Hope Floats - 60.1bilheteria e 24 avaliação 
+
+#Grupo 04 - Péssima Bilheteria e Péssima Avaliação 
+A bilheteria nesse grupo varia entre : 47.9 - 33.9 
+A avaliação nesse grupo varia entre: 15 - 7 
+
+Como representantes temos : 
+  Premonition - 47.9 bilheteria e 8 avaliação 
+  All About Steve - 33.9 bilheteria e 7 avaliação 
+
 ```{r}
-k_escolhido = 3
+k_escolhido = 4
 
  atribuicoes %>% 
     filter(k == k_escolhido) %>% 
@@ -131,3 +137,4 @@ k_escolhido = 3
     coord_flip() 
 ```
 
+  
